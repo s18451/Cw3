@@ -5,36 +5,75 @@ using System.Threading.Tasks;
 using Cw3.DAL;
 using Cw3.Models;
 using Microsoft.AspNetCore.Mvc;
+using System.Data.SqlClient;
 
 namespace Cw3.Controllers
 {
+
     [ApiController]
     [Route("api/students")]
     public class StudentsController : ControllerBase
     {
         private readonly IDbService _dbService;
 
+        private String connection = "Data Source=db-mssql;Initial Catalog=s18451;Integrated Security=True";
+
         public StudentsController(IDbService dbService)
         {
             _dbService = dbService;
         }
         [HttpGet]
-        public IActionResult GetStudents(string orderBy)
+        public IActionResult GetStudents()
         {
-            return Ok(_dbService.GetStudents());
-        }
-        [HttpGet("{id}")]
-        public IActionResult GetStudent(int id)
-        {
-            if (id == 1)
+            string id = "s1234";
+            using (var con = new SqlConnection(connection))
             {
-                return Ok("Kowalski");
-            } else if(id == 2)
-            {
-                return Ok("Malewski");
-            }
+                using(var com = new SqlCommand())
+                {
+                    com.Connection = con;
+                    com.CommandText = "select * from Student where IndexNumber=@id";
+                    com.Parameters.AddWithValue("id", id);
 
-            return NotFound("Nie znaleziono studenta");
+                    con.Open();
+                    var dr = com.ExecuteReader();
+
+                    var studentList = new List<Student>();
+                    while (dr.Read())
+                    {
+                        var st = new Student();
+                        st.IndexNumber = dr["IndexNumber"].ToString();
+                        st.FirstName = dr["FirstName"].ToString();
+                        st.LastName = dr["LastName"].ToString();
+                        st.BirthDate = DateTime.Parse(dr["BirthDate"].ToString());
+                        st.IdEnrollment = int.Parse(dr["IdEnrollment"].ToString());
+                        studentList.Add(st);
+                    }
+                    return Ok(studentList);
+                }
+            }
+        }
+
+        [HttpGet("{id}")]
+        public IActionResult GetStudent(string id)
+        {
+            using (var con = new SqlConnection(connection))
+            {
+                using (var com = new SqlCommand())
+                {
+                    com.Connection = con;
+                    com.CommandText = "select * from Enrollment WHERE IdEnrollment=(SELECT IdEnrollment FROM Student WHERE IndexNumber=\'"+id+"\')";
+
+                    con.Open();
+                    var dr = com.ExecuteReader();
+
+                    var enrollmentList = new List<string>();
+                    while (dr.Read())
+                    {
+                        enrollmentList.Add(dr["Semester"].ToString());
+                    }
+                    return Ok(enrollmentList);
+                }
+            }
         }
 
         [HttpPost]
