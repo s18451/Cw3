@@ -1,0 +1,10 @@
+07.04.2020 19:22:17 /  GET 
+07.04.2020 19:22:17 /  GET 
+07.04.2020 19:22:24 /api/enrollments/promotions  POST {
+"Studies": "IT",
+"Semester": 1
+}
+07.04.2020 19:22:35 /api/enrollments/promotions  POST {
+"Studies": "IT",
+"Semester": 1
+}

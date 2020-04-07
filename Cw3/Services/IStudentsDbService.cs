@@ -1,4 +1,5 @@
 ﻿using Cw3.DTOs.Requests;
+using Cw3.DTOs.Responses;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
@@ -7,9 +8,10 @@ using System.Threading.Tasks;
 
 namespace Cw3.Services
 {
-    interface IStudentsDbService
+    public interface IStudentsDbService
     {
-        IActionResult EnrollStudent(EnrollStudentRequest request);
-        IActionResult PromoteStudent(EnrollPromoteRequest request);
+        EnrollStudentResponse EnrollStudent(EnrollStudentRequest request);
+        EnrollPromoteResponse PromoteStudent(EnrollPromoteRequest request);
+        bool checkStudentID(string index);
     }
 }
