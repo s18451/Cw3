@@ -1,10 +1,12 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 using Cw3.DAL;
 using Cw3.Middlewares;
 using Cw3.Services;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
@@ -14,6 +16,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.IdentityModel.Tokens;
 
 namespace Cw3
 {
@@ -30,6 +33,20 @@ namespace Cw3
         public void ConfigureServices(IServiceCollection services)
         {
             //services.AddSingleton<IDbService, MockDbService>();
+            services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+                    .AddJwtBearer(options =>
+                    {
+                        options.TokenValidationParameters = new
+                        Microsoft.IdentityModel.Tokens.TokenValidationParameters
+                        {
+                            ValidateIssuer = true,
+                            ValidateAudience = true,
+                            ValidateLifetime = true,
+                            ValidIssuer = "Gakko",
+                            ValidAudience = "Students",
+                            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Configuration["SecretKey"]))
+                        };
+                    });
             services.AddTransient<IStudentsDbService, SqlServerDbService>();
             services.AddControllers();
         }
@@ -42,37 +59,39 @@ namespace Cw3
                 app.UseDeveloperExceptionPage();
             }
 
-            app.UseMiddleware<LoggingMiddleware>();
+            //app.UseMiddleware<LoggingMiddleware>();
 
-            app.Use(async (context, next) =>
-            {
-                if (!context.Request.Headers.ContainsKey("Index"))
-                {
-                    context.Response.StatusCode = StatusCodes.Status401Unauthorized;
-                    await context.Response.WriteAsync("Nie poda³eœ indeksu");
-                    return;
-                }
-                else
-                {
-                    string index = context.Request.Headers["Index"].ToString();
-                    if (service.checkStudentID(index))
-                    {
-                        await next();
-                    } else
-                    {
-                        context.Response.StatusCode = StatusCodes.Status401Unauthorized;
-                        await context.Response.WriteAsync("Niew³aœciwy index");
-                        return;
-                    }
-                }
+            //app.Use(async (context, next) =>
+            //{
+            //    if (!context.Request.Headers.ContainsKey("Index"))
+            //    {
+            //        context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+            //        await context.Response.WriteAsync("Nie poda³eœ indeksu");
+            //        return;
+            //    }
+            //    else
+            //    {
+            //        string index = context.Request.Headers["Index"].ToString();
+            //        if (service.checkStudentID(index))
+            //        {
+            //            await next();
+            //        } else
+            //        {
+            //            context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+            //            await context.Response.WriteAsync("Niew³aœciwy index");
+            //            return;
+            //        }
+            //    }
 
 
-                //Custom code
-                await next();
-            });
+            //    //Custom code
+            //    await next();
+            //});
             app.UseHttpsRedirection();
 
             app.UseRouting();
+
+            app.UseAuthentication();
 
             app.UseAuthorization();
 

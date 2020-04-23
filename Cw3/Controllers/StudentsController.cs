@@ -6,6 +6,12 @@ using Cw3.DAL;
 using Cw3.Models;
 using Microsoft.AspNetCore.Mvc;
 using System.Data.SqlClient;
+using Cw3.DTOs.Requests;
+using System.Security.Claims;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
+using Microsoft.Extensions.Configuration;
+using System.IdentityModel.Tokens.Jwt;
 
 namespace Cw3.Controllers
 {
@@ -17,6 +23,13 @@ namespace Cw3.Controllers
         private readonly IDbService _dbService;
 
         private String connection = "Data Source=db-mssql;Initial Catalog=s18451;Integrated Security=True";
+
+        public IConfiguration Configuration { get; set; }
+
+        public StudentsController(IConfiguration configuration)
+        {
+            Configuration = configuration;
+        }
 
         public StudentsController(IDbService dbService)
         {
@@ -92,6 +105,37 @@ namespace Cw3.Controllers
         public IActionResult DeleteStudent(int id)
         {
             return Ok("Ususuwanie ukończone");
+        }
+
+
+        [HttpPost]
+        public IActionResult Login(LoginRequestDTO requst)
+        {
+            var claims = new[]
+            {
+                new Claim(ClaimTypes.NameIdentifier, "1"),
+                new Claim(ClaimTypes.Name, "1"),
+                new Claim(ClaimTypes.Role, "employee"),
+                new Claim(ClaimTypes.Role, "student")
+            };
+
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Configuration["SecretKey"]));
+            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+
+            var token = new JwtSecurityToken
+            (
+                issuer: "Admin",
+                audience: "Employees",
+                claims: claims,
+                expires: DateTime.Now.AddMinutes(10),
+                signingCredentials: creds
+            );
+
+            return Ok(new
+            {
+                token = new JwtSecurityTokenHandler().WriteToken(token),
+                refreshtoken=Guid.NewGuid()
+            });
         }
     }
     
